@@ -40,7 +40,7 @@ struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
     
     /// The point for the top anchor
     private var topAnchor: CGFloat {
-        return max(presenterContentRect.height - sheetContentRect.height - handlerSectionHeight, 110)
+        return max(presenterContentRect.height - sheetContentRect.height - handlerSectionHeight, 210)
     }
     
     /// The he point for the bottom anchor
