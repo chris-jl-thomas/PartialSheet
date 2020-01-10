@@ -13,6 +13,7 @@ A custom SwiftUI modifier to present a Partial Modal Sheet based on his content 
 - \[x]  Customizable colors
 - \[x]  iOS compatibility
 - \[x]  Landscape compatibility
+- \[x] partial sheet with Item not boolean added - needs modifying so you don't force unwrap the item
 
 #### Upcoming
 - \[ ] iPad compatibility
@@ -50,6 +51,19 @@ YourView
     enableCover: Bool = true, 
     coverColor: Color = Color.black.opacity(0.4), 
     view: @escaping () -> SheetContent) -> some View where SheetContent : View
+```
+
+To use the **Partial Sheet with Item** just attach the new modifier:
+
+```Swift
+YourView
+.partialSheet(
+item: Binding<Item?> 
+    backgroundColor: Color = Color.white, 
+    handlerBarColor: Color = Color.gray, 
+    enableCover: Bool = true, 
+    coverColor: Color = Color.black.opacity(0.4), 
+    view: @escaping (Item) -> SheetContent) -> some View where SheetContent : View
 ```
 
 If you want a starting point copy in your ContentView file the following code:

@@ -38,4 +38,24 @@ extension View {
 			)
 		)
 	}
+    
+    
+    public func partialSheet<Item, SheetContent: View>(
+        item: Binding<Item?>,
+        backgroundColor: Color = Color.white,
+        handlerBarColor: Color = Color.gray,
+        enableCover: Bool = true,
+        coverColor: Color = Color.black.opacity(0.4),
+        view: @escaping (Item) -> SheetContent ) -> some View where Item: Identifiable {
+        self.modifier(
+            PartialItemSheet(
+                item: item,
+                backgroundColor: backgroundColor,
+                handlerBarColor: handlerBarColor,
+                enableCover: enableCover,
+                coverColor: coverColor,
+                view: view
+            )
+        )
+    }
 }

@@ -2,69 +2,48 @@
 //  PartialSheetViewModifier.swift
 //  PartialModal
 //
-//  Created by Miotto Andrea on 09/11/2019.
-//  Copyright © 2019 Miotto Andrea. All rights reserved.
-//
 
 import SwiftUI
 
 /// This is the modifier for the Partial Sheet
-struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
+struct PartialItemSheet<Item, SheetContent>: ViewModifier where SheetContent: View {
     
-    // MARK: - Public Properties
+    @Binding var item: Item?
     
-    /// Tells if the sheet should be presented or not
-    @Binding var presented: Bool
-    
-    /// The color of the background
+    var presented: Bool {
+        guard let _ = item else { return false }
+        return true
+    }
     var backgroundColor: Color
-    
-    /// The color of the Handlander Bar
     var handlerBarColor: Color
-    
-    /// Tells if should be there a cover between the Partial Sheet and the Content
     var enableCover: Bool
-    
-    /// The color of the cover
     var coverColor: Color
     
-    var view: () -> SheetContent
+    var view: (Item) -> SheetContent
     
-    // MARK: - Private Properties
-    
-    /// The rect containing the content
     @State private var presenterContentRect: CGRect = .zero
-    
-    /// The rect containing the content
     @State private var sheetContentRect: CGRect = .zero
     
-    /// The point for the top anchor
     private var topAnchor: CGFloat {
-        return max(presenterContentRect.height - sheetContentRect.height - handlerSectionHeight, 210)
+        return max(presenterContentRect.height - sheetContentRect.height - handlerSectionHeight, 110)
     }
     
-    /// The he point for the bottom anchor
     private var bottomAnchor: CGFloat {
         return UIScreen.main.bounds.height + 5
     }
     
-    /// The current anchor point, based if the **presented** property is true or false
     private var currentAnchorPoint: CGFloat {
         return presented ?
             topAnchor :
         bottomAnchor
     }
     
-    /// The height of the handler bar section
     private var handlerSectionHeight: CGFloat {
-        return 30
+        return 20
     }
-    
-    /// The Gesture State for the drag gesture
+
     @GestureState private var dragState = DragState.inactive
-    
-    // MARK: - Content Builders
-    
+
     func body(content: Content) -> some View {
         ZStack {
             content
@@ -85,9 +64,7 @@ struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
         }
     }
     
-    /// This is the builder for the sheet content
     func sheet()-> some View {
-        // Build the drag gesture
         let drag = DragGesture()
             .updating($dragState) { drag, state, _ in
                 let yOffset = drag.translation.height
@@ -106,6 +83,22 @@ struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
                 }
         }
         .onEnded(onDragEnded)
+
+        let sheetView = item != nil
+            ? self.view(item!)
+                .background(
+                    GeometryReader { proxy -> AnyView in
+                        let rect = proxy.frame(in: .global)
+                        // This avoids an infinite layout loop
+                        if rect.integral != self.sheetContentRect.integral {
+                            DispatchQueue.main.async {
+                                self.sheetContentRect = rect
+                            }
+                        }
+                        return AnyView(EmptyView())
+                    }
+            )
+        : nil
         
         return ZStack {
             // Attach the cover view
@@ -115,7 +108,7 @@ struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
                     .edgesIgnoringSafeArea(.vertical)
                     .onTapGesture {
                         withAnimation {
-                            self.presented = false
+                            self.item = nil
                         }
                 }
             }
@@ -133,19 +126,7 @@ struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
                     .frame(height: handlerSectionHeight)
                     VStack {
                         // Attach the content of the sheet
-                        self.view()
-                            .background(
-                                GeometryReader { proxy -> AnyView in
-                                    let rect = proxy.frame(in: .global)
-                                    // This avoids an infinite layout loop
-                                    if rect.integral != self.sheetContentRect.integral {
-                                        DispatchQueue.main.async {
-                                            self.sheetContentRect = rect
-                                        }
-                                    }
-                                    return AnyView(EmptyView())
-                                }
-                        )
+                        sheetView
                     }
                     Spacer()
                 }
@@ -184,12 +165,14 @@ struct PartialSheet<SheetContent>: ViewModifier where SheetContent: View {
         // Set the correct anchor point based on the vertical direction of the drag
         if verticalDirection > 1 {
             DispatchQueue.main.async {
-                self.presented = false
+                self.item = nil
             }
         } else if verticalDirection < 0 {
-            self.presented = true
+//            self.presented = true
         } else {
-            self.presented = (closestPosition == topAnchor)
+            if (closestPosition != topAnchor) {
+                self.item = nil
+            }
         }
     }
 }
